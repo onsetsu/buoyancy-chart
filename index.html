@@ -1,0 +1,100 @@
+<?php
+/*
+ *  Class SMA PlugIn D3
+ */
+
+// Define class
+if (!class_exists('SMAPlugInD3')) {
+	class SMAPlugInD3 {
+
+		// Constructor: Initialize Word Cloud Visualization
+		function __construct($sma_plugin) {
+			?>
+				<h2>Word Cloud</h2>
+			<?php
+			
+			// load style sheets
+			$sma_plugin->Include_css('visualizations/d3js/d3_wordcloud/base.css');
+			$sma_plugin->Include_css('visualizations/d3js/d3_wordcloud/color_key.css');
+
+			// Security
+			$nonce = wp_create_nonce(c_smaplugin_nonce_ajax);
+			
+			// Load data from HANA database.
+			$result = $sma_plugin->getAjaxDB(SMAPlugIn_Config::$visualization_data_url_wordcloud . "?" .
+				"serverapikey=" . $sma_plugin->readValueFromFile('.htsmaapikeys', 'serverapikey : ')
+			);
+			
+			if ($result == '[]') {
+				echo "</br> </br>";
+				echo "<h2>Sorry but no data was returned for this visualization.</h2>";
+				echo "<p>This can have different reasons: </br> - database is not reachable </br> - your blog was not crawled yet </br> - there are no trends in the database for words from your blog </p>";
+				echo "<p>Try again later.</p>";
+			} else {
+	?>
+				<script type="text/javascript">
+					window.WordCloud = window.WordCloud || {};
+					window.WordCloud.array_data = <?php echo $result; ?>;
+				</script>
+
+				<div class="wordCloud">
+					<div id="wordCloudChart">
+						<!--
+							Tooltip
+						-->
+						<div id="wordCloudTooltip">
+							<div id="wordCloudTooltipContainer">
+								<div class="wordCloudDepartment"></div>
+								<div class="wordCloudRule"></div>
+								<div class="wordCloudName"></div>
+								<div class="wordCloudDiscretion"></div>
+								<div class="wordCloudValuesContainer">
+									<ul>
+										<li><span class="wordCloudValue"></span></li>
+										<li><span class="wordCloudIfidf"></span></li>
+										<li><span id="wordCloudDegree"></span></li>
+										<li><span id="wordCloudIntercept"></span></li>
+										<li><span class="wordCloudDegree"></span></li>
+									</ul>
+								</div>
+								<div class="wordCloudChart"></div>
+								<div class="wordCloudTail"></div>
+							</div>
+						</div>
+						<div id="wordCloudCanvas"></div>
+					</div>
+				</div>
+				<div>
+					<ul>
+						<li><input type="checkbox" id="checkbox1" name="Popular" onclick="WordCloud.hideTrend.popular = $(this).attr('checked'); WordCloud.scaleRadius();" >Hide Popular Trends</input></li>
+						<li><input type="checkbox" id="checkbox2" name="Increasing" onclick="WordCloud.hideTrend.increasing = $(this).attr('checked'); WordCloud.scaleRadius();" >Hide Increasing Trends</input></li>
+						<li><input type="checkbox" id="checkbox3" name="Decreasing" onclick="WordCloud.hideTrend.decreasing = $(this).attr('checked'); WordCloud.scaleRadius();" >Hide Decreasing Trends</input></li>
+					</ul>
+				</div>
+				<div class="wordCloud">
+					<!--
+						Explanationary Text
+					-->
+					<ul>
+						<li>This visualization illustrates the popularity of terms that are relevant in your blog. Every Circle represents one term and the larger the circle is drawed the more important this term is for your blog. By hovering over the circle you can find out which term it describes.</li>
+						<li>The color and the position of the cicles contains information about the popularity of the terms. Therefore a circle on the top represents a term with an increasing popularity whereas the terms for circles on the bottom have an decreasing popularity. The color indicates the current popularity: Green for highly widespreaded terms, red for slightly widespreaded terms and gray for averaged widespreaded terms.</li>
+						<li>You can filter the terms using the checkboxes. A term is classified as popular, if it is already widespreaded (colored green) and it has a further increasing popularity (located at the top). The categories "decreasing" and "increasing" characterize terms that are currently only slightly widespreaded with an decreasing/increasing popularity.</li>
+					</ul>
+				</div>
+
+	<?php
+				// external libraries
+				$sma_plugin->Include_lib('visualizations/d3js/d3_wordcloud/libs/underscore.js');
+				$sma_plugin->Include_lib('visualizations/d3js/d3_wordcloud/libs/d3.min.js');
+				$sma_plugin->Include_lib('visualizations/d3js/d3_wordcloud/libs/d3.geom.min.js');
+				$sma_plugin->Include_lib('visualizations/d3js/d3_wordcloud/libs/d3.layout.min.js');
+				
+				// internal libs - drawing the visualizations as well as interactions
+				$sma_plugin->Include_lib('visualizations/d3js/d3_wordcloud/Chart.js');
+				$sma_plugin->Include_lib('visualizations/d3js/d3_wordcloud/base.js');
+			}
+		}
+	}
+}
+
+?>
