@@ -161,6 +161,7 @@ window.WordCloud = window.WordCloud || {};
 			}
 			this.nodes.push(out);
 		};
+		console.log(this.data);
 
 		// Sort nodes by size to avoid overlays.
 		this.nodes.sort(function(a, b){  

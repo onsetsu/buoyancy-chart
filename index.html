@@ -1,100 +1,89 @@
-<?php
-/*
- *  Class SMA PlugIn D3
- */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<!-- load style sheets -->
+	<link rel="stylesheet" type="text/css" href="./base.css"/>
+	<link rel="stylesheet" type="text/css" href="./color_key.css"/>
+</head>
+<body>
+	<h1>Buoyancy Chart Data Explorer</h1>
 
-// Define class
-if (!class_exists('SMAPlugInD3')) {
-	class SMAPlugInD3 {
+	<!-- external libraries -->
+	<script src="../libs/jquery-3.1.0.js" type="text/javascript" charset="utf-8"></script>
+	<script src="../libs/underscore.js" type="text/javascript" charset="utf-8"></script>
+	<script src="../libs/d3.js" type="text/javascript" charset="utf-8"></script>
 
-		// Constructor: Initialize Word Cloud Visualization
-		function __construct($sma_plugin) {
-			?>
-				<h2>Word Cloud</h2>
-			<?php
-			
-			// load style sheets
-			$sma_plugin->Include_css('visualizations/d3js/d3_wordcloud/base.css');
-			$sma_plugin->Include_css('visualizations/d3js/d3_wordcloud/color_key.css');
-
-			// Security
-			$nonce = wp_create_nonce(c_smaplugin_nonce_ajax);
-			
-			// Load data from HANA database.
-			$result = $sma_plugin->getAjaxDB(SMAPlugIn_Config::$visualization_data_url_wordcloud . "?" .
-				"serverapikey=" . $sma_plugin->readValueFromFile('.htsmaapikeys', 'serverapikey : ')
-			);
-			
-			if ($result == '[]') {
-				echo "</br> </br>";
-				echo "<h2>Sorry but no data was returned for this visualization.</h2>";
-				echo "<p>This can have different reasons: </br> - database is not reachable </br> - your blog was not crawled yet </br> - there are no trends in the database for words from your blog </p>";
-				echo "<p>Try again later.</p>";
-			} else {
-	?>
-				<script type="text/javascript">
-					window.WordCloud = window.WordCloud || {};
-					window.WordCloud.array_data = <?php echo $result; ?>;
-				</script>
-
-				<div class="wordCloud">
-					<div id="wordCloudChart">
-						<!--
-							Tooltip
-						-->
-						<div id="wordCloudTooltip">
-							<div id="wordCloudTooltipContainer">
-								<div class="wordCloudDepartment"></div>
-								<div class="wordCloudRule"></div>
-								<div class="wordCloudName"></div>
-								<div class="wordCloudDiscretion"></div>
-								<div class="wordCloudValuesContainer">
-									<ul>
-										<li><span class="wordCloudValue"></span></li>
-										<li><span class="wordCloudIfidf"></span></li>
-										<li><span id="wordCloudDegree"></span></li>
-										<li><span id="wordCloudIntercept"></span></li>
-										<li><span class="wordCloudDegree"></span></li>
-									</ul>
-								</div>
-								<div class="wordCloudChart"></div>
-								<div class="wordCloudTail"></div>
-							</div>
-						</div>
-						<div id="wordCloudCanvas"></div>
-					</div>
-				</div>
-				<div>
-					<ul>
-						<li><input type="checkbox" id="checkbox1" name="Popular" onclick="WordCloud.hideTrend.popular = $(this).attr('checked'); WordCloud.scaleRadius();" >Hide Popular Trends</input></li>
-						<li><input type="checkbox" id="checkbox2" name="Increasing" onclick="WordCloud.hideTrend.increasing = $(this).attr('checked'); WordCloud.scaleRadius();" >Hide Increasing Trends</input></li>
-						<li><input type="checkbox" id="checkbox3" name="Decreasing" onclick="WordCloud.hideTrend.decreasing = $(this).attr('checked'); WordCloud.scaleRadius();" >Hide Decreasing Trends</input></li>
-					</ul>
-				</div>
-				<div class="wordCloud">
-					<!--
-						Explanationary Text
-					-->
-					<ul>
-						<li>This visualization illustrates the popularity of terms that are relevant in your blog. Every Circle represents one term and the larger the circle is drawed the more important this term is for your blog. By hovering over the circle you can find out which term it describes.</li>
-						<li>The color and the position of the cicles contains information about the popularity of the terms. Therefore a circle on the top represents a term with an increasing popularity whereas the terms for circles on the bottom have an decreasing popularity. The color indicates the current popularity: Green for highly widespreaded terms, red for slightly widespreaded terms and gray for averaged widespreaded terms.</li>
-						<li>You can filter the terms using the checkboxes. A term is classified as popular, if it is already widespreaded (colored green) and it has a further increasing popularity (located at the top). The categories "decreasing" and "increasing" characterize terms that are currently only slightly widespreaded with an decreasing/increasing popularity.</li>
-					</ul>
-				</div>
-
-	<?php
-				// external libraries
-				$sma_plugin->Include_lib('visualizations/d3js/d3_wordcloud/libs/underscore.js');
-				$sma_plugin->Include_lib('visualizations/d3js/d3_wordcloud/libs/d3.min.js');
-				$sma_plugin->Include_lib('visualizations/d3js/d3_wordcloud/libs/d3.geom.min.js');
-				$sma_plugin->Include_lib('visualizations/d3js/d3_wordcloud/libs/d3.layout.min.js');
-				
-				// internal libs - drawing the visualizations as well as interactions
-				$sma_plugin->Include_lib('visualizations/d3js/d3_wordcloud/Chart.js');
-				$sma_plugin->Include_lib('visualizations/d3js/d3_wordcloud/base.js');
+	<!-- Load data. -->
+	<script type="text/javascript">
+		// some data
+		/*var result = [
+			{
+				'tf-idf': 30,
+				intercept: 1,
+				degree: 2
 			}
+		];
+		if (result.length === 0) {
+			$(`</br> </br>
+<h2>Sorry but no data was returned for this visualization.</h2>
+<p>This can have different reasons: </br> - database is not reachable </br> - your blog was not crawled yet </br> - there are no trends in the database for words from your blog </p>
+<p>Try again later.</p>
+`).appendTo($('body'));
 		}
-	}
-}
+		*/
+	</script>
+	<script type="text/javascript">
+		window.WordCloud = window.WordCloud || {};
+		//window.WordCloud.array_data = result;
+	</script>
 
-?>
+	<div class="wordCloud">
+		<div id="wordCloudChart">
+			<!--
+                Tooltip
+            -->
+			<div id="wordCloudTooltip">
+				<div id="wordCloudTooltipContainer">
+					<div class="wordCloudDepartment"></div>
+					<div class="wordCloudRule"></div>
+					<div class="wordCloudName"></div>
+					<div class="wordCloudDiscretion"></div>
+					<div class="wordCloudValuesContainer">
+						<ul>
+							<li><span class="wordCloudValue"></span></li>
+							<li><span class="wordCloudIfidf"></span></li>
+							<li><span id="wordCloudDegree"></span></li>
+							<li><span id="wordCloudIntercept"></span></li>
+							<li><span class="wordCloudDegree"></span></li>
+						</ul>
+					</div>
+					<div class="wordCloudChart"></div>
+					<div class="wordCloudTail"></div>
+				</div>
+			</div>
+			<div id="wordCloudCanvas"></div>
+		</div>
+	</div>
+	<div>
+		<ul>
+			<li><input type="checkbox" id="checkbox1" name="Popular" onclick="WordCloud.hideTrend.popular = $(this).attr('checked'); WordCloud.scaleRadius();" >Hide Popular Trends</input></li>
+			<li><input type="checkbox" id="checkbox2" name="Increasing" onclick="WordCloud.hideTrend.increasing = $(this).attr('checked'); WordCloud.scaleRadius();" >Hide Increasing Trends</input></li>
+			<li><input type="checkbox" id="checkbox3" name="Decreasing" onclick="WordCloud.hideTrend.decreasing = $(this).attr('checked'); WordCloud.scaleRadius();" >Hide Decreasing Trends</input></li>
+		</ul>
+	</div>
+	<div class="wordCloud">
+		<!--
+            Explanationary Text
+        -->
+		<ul>
+			<li>This visualization illustrates the popularity of terms that are relevant in your blog. Every Circle represents one term and the larger the circle is drawed the more important this term is for your blog. By hovering over the circle you can find out which term it describes.</li>
+			<li>The color and the position of the cicles contains information about the popularity of the terms. Therefore a circle on the top represents a term with an increasing popularity whereas the terms for circles on the bottom have an decreasing popularity. The color indicates the current popularity: Green for highly widespreaded terms, red for slightly widespreaded terms and gray for averaged widespreaded terms.</li>
+			<li>You can filter the terms using the checkboxes. A term is classified as popular, if it is already widespreaded (colored green) and it has a further increasing popularity (located at the top). The categories "decreasing" and "increasing" characterize terms that are currently only slightly widespreaded with an decreasing/increasing popularity.</li>
+		</ul>
+	</div>
+
+	<!-- internal libs - drawing the visualizations as well as interactions -->
+	<script src="./Chart.js" type="text/javascript" charset="utf-8"></script>
+	<script src="./base.js" type="text/javascript" charset="utf-8"></script>
+</body>
+</html>
